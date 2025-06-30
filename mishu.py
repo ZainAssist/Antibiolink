@@ -4,8 +4,14 @@ Userid: https://t.me/Uff_Zainu
 Channel: https://t.me/About_Zain
 """
 
+from pyrogram.enums import ChatPermissions
 from pyrogram import Client, filters, errors
-from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ChatPermissions
+from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from pyrogram.errors import UserNotParticipant
+import time
+import os
+import threading
+
 
 from helper.utils import (
     is_admin,

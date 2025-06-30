@@ -1,6 +1,6 @@
 """
-Author: Zain
-Userid: https://t.me/Uff_Zainu
+Author: Zainu
+User: https://t.me/Uff_Zainu
 Channel: https://t.me/About_Zain
 """
 
@@ -34,13 +34,51 @@ app = Client(
     bot_token=BOT_TOKEN,
 )
 
+
+
+# ============ 🔗 Force Join Channels (Edit Only Here) ============
+FORCE_CHANNELS = [
+    {"id": "-1001547401444", "link": "https://t.me/About_Zain"},  # Channel 
+    {"id": "-1001345338792", "link": "https://t.me/MusicOnMasti"},  # Group 
+]
+# =================================================================
+
 @app.on_message(filters.command("start"))
 async def start_handler(client: Client, message):
-    chat_id = message.chat.id
+    user_id = message.from_user.id
+
+    # 🔍 Check force join
+    not_joined = []
+    for ch in FORCE_CHANNELS:
+        try:
+            await client.get_chat_member(ch["id"], user_id)
+        except UserNotParticipant:
+            not_joined.append(ch)
+        except Exception:
+            continue  # Optional: ignore if bot isn't admin in channel
+
+    # ❌ If user hasn't joined all channels
+    if not_joined:
+        btns = [
+            [InlineKeyboardButton(f"📢 Join Channel {i+1}", url=ch["link"])]
+            for i, ch in enumerate(not_joined)
+        ]
+        btns.append([
+            InlineKeyboardButton("✅ I've Joined", callback_data="check_join"),
+            InlineKeyboardButton("🗑️ Close", callback_data="close")
+        ])
+        msg = "**🔒 Access Denied!**\n\nPlease join the required channels to continue:\n"
+        for ch in not_joined:
+            msg += f"• #{ch['id']}\n"
+        await message.reply(msg, reply_markup=InlineKeyboardMarkup(btns))
+        return
+
+    # ✅ All channels joined — show welcome
     bot = await client.get_me()
     add_url = f"https://t.me/{bot.username}?startgroup=true"
-    text = (
-        "**⚜️ Welcome to AntiBioLink Bot! ⚜️**\n\n"
+
+    welcome_text = (
+        "**✨ Welcome to Antibiolink! ✨**\n\n"
         "🛡️ I help protect your groups from users with links in their bio.\n\n"
         "**🔹 Key Features:**\n"
         "   • Automatic URL detection in user bios\n"
@@ -49,15 +87,126 @@ async def start_handler(client: Client, message):
         "   • Whitelist management for trusted users\n\n"
         "**Use /help to see all available commands.**"
     )
+
     kb = InlineKeyboardMarkup([
-        [InlineKeyboardButton("🍹Add Me to Your Group🍹", url=add_url)],
+        [InlineKeyboardButton("➕ Add Me to Your Group", url=add_url)],
         [
-            InlineKeyboardButton("🍷 Support", url="https://t.me/MusicOnMasti"),
+            InlineKeyboardButton("🛠️ Support", url="https://t.me/MusicOnMasti"),
             InlineKeyboardButton("🗑️ Close", callback_data="close")
         ]
     ])
-    await client.send_message(chat_id, text, reply_markup=kb)
-    
+
+    await message.reply(welcome_text, reply_markup=kb)
+
+
+@app.on_callback_query(filters.regex("check_join"))
+async def recheck_join(client: Client, callback_query):
+    user_id = callback_query.from_user.id
+    not_joined = []
+    for ch in FORCE_CHANNELS:
+        try:
+            await client.get_chat_member(ch["id"], user_id)
+        except UserNotParticipant:
+            not_joined.append(ch)
+        except Exception:
+            continue
+
+    if not_joined:
+        await callback_query.answer("❌ You're still missing some channels!", show_alert=True)
+    else:
+        await callback_query.message.delete()
+        await start_handler(client, callback_query.message)
+
+# 🔇 Mute Command
+@app.on_message(filters.command("mute") & filters.group)
+async def mute_user(client, message):
+    user_id = None
+    if message.reply_to_message:
+        user_id = message.reply_to_message.from_user.id
+    elif len(message.command) > 1:
+        try:
+            user_id = int(message.command[1])
+        except:
+            return await message.reply("❗ Invalid user ID.")
+
+    if not user_id:
+        return await message.reply("❗ Use: /mute or reply to a user.")
+
+    try:
+        await client.restrict_chat_member(
+            message.chat.id,
+            user_id,
+            permissions=ChatPermissions()  # No permissions = mute
+        )
+        await message.reply(f"🔇 User `{user_id}` muted.")
+    except Exception as e:
+        await message.reply(f"❌ Mute failed: {e}")
+
+# 🔊 Unmute Command
+@app.on_message(filters.command("unmute") & filters.group)
+async def unmute_user(client, message):
+    user_id = None
+    if message.reply_to_message:
+        user_id = message.reply_to_message.from_user.id
+    elif len(message.command) > 1:
+        try:
+            user_id = int(message.command[1])
+        except:
+            return await message.reply("❗ Invalid user ID.")
+
+    if not user_id:
+        return await message.reply("❗ Use: /unmute or reply to a user.")
+
+    try:
+        await client.restrict_chat_member(
+            message.chat.id,
+            user_id,
+            permissions=ChatPermissions(
+                can_send_messages=True,
+                can_send_media_messages=True,
+                can_send_polls=True,
+                can_send_other_messages=True,
+                can_add_web_page_previews=True,
+                can_invite_users=True,
+            )
+        )
+        await message.reply(f"🔊 User `{user_id}` unmuted.")
+    except Exception as e:
+        await message.reply(f"❌ Unmute failed: {e}")
+
+# 🔨 Ban Command
+@app.on_message(filters.command("ban") & filters.group)
+async def ban_user(client, message):
+    user_id = None
+    if message.reply_to_message:
+        user_id = message.reply_to_message.from_user.id
+    elif len(message.command) > 1:
+        try:
+            user_id = int(message.command[1])
+        except:
+            return await message.reply("❗ Invalid user ID.")
+
+    if not user_id:
+        return await message.reply("❗ Use: /ban or reply to a user.")
+
+    try:
+        await client.ban_chat_member(message.chat.id, user_id)
+        await message.reply(f"🚫 User `{user_id}` banned.")
+    except Exception as e:
+        await message.reply(f"❌ Ban failed: {e}")
+
+# 🔓 Unban Command
+@app.on_message(filters.command("unban") & filters.group)
+async def unban_user(client, message):
+    if len(message.command) < 2:
+        return await message.reply("❗ Use: /unban user_id")
+    try:
+        user_id = int(message.command[1])
+        await client.unban_chat_member(message.chat.id, user_id)
+        await message.reply(f"✅ User `{user_id}` unbanned.")
+    except Exception as e:
+        await message.reply(f"❌ Unban failed: {e}")
+
 @app.on_message(filters.command("help"))
 async def help_handler(client: Client, message):
     chat_id = message.chat.id
@@ -65,6 +214,10 @@ async def help_handler(client: Client, message):
         "**🛠️ Bot Commands & Usage**\n\n"
         "`/config` – set warn-limit & punishment mode\n"
         "`/free` – whitelist a user (reply or user/id)\n"
+        "`/mute` – mute a user (reply or user/id)\n"
+        "`/unmute` – unmute a user (reply or user/id)\n"
+        "`/ban` – ban a user (reply or user/id)\n"
+        "`/unban` – unban a user (reply or user/id)\n"
         "`/unfree` – remove from whitelist\n"
         "`/freelist` – list all whitelisted users\n\n"
         "**When someone with a URL in their bio posts, I’ll:**\n"
@@ -76,8 +229,16 @@ async def help_handler(client: Client, message):
     kb = InlineKeyboardMarkup([
         [InlineKeyboardButton("🗑️ Close", callback_data="close")]
     ])
-    await client.send_message(chat_id, help_text, reply_markup=kb)
+    await message.reply_text(help_text, reply_markup=kb)
 
+
+@app.on_callback_query(filters.regex("close"))
+async def close_callback(client: Client, callback_query):
+    try:
+        await callback_query.message.delete()
+    except Exception as e:
+        await callback_query.answer("Couldn't delete message.", show_alert=True)
+        
 @app.on_message(filters.group & filters.command("config"))
 async def configure(client: Client, message):
     chat_id = message.chat.id
@@ -368,5 +529,7 @@ async def check_bio(client: Client, message):
     else:
         await reset_warnings(chat_id, user_id)
 
-if __name__ == "__main__":
-    app.run()
+
+
+# infinty polling
+app.run()

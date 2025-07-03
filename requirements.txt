@@ -1,5 +1,5 @@
 pyrofork
-pyrogram
 tgcrypto
 motor
-flask
+python-dotenv
+pymongo

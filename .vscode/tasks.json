@@ -1,0 +1,16 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Run Antibiolink",
+			"type": "shell",
+			"command": "python",
+			"args": [
+				"Zain.py"
+			],
+			"group": "run",
+			"isBackground": false,
+			"problemMatcher": []
+		}
+	]
+}

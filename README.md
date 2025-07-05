@@ -7,8 +7,7 @@
 </h2>
 
 <p align="center">
-  <img src="https://graph.org/file/c0af786775fd598580456-a4c3ec22e99c148b1d.jpg">
-</p>
+<img src="https://graph.org/file/c0af786775fd598580456-a4c3ec22e99c148b1d.jpg" width="300" align="right">
 
 _**ᴀᴠᴀɪʟᴀʙʟᴇ ᴏɴ ᴛᴇʟᴇɢʀᴀᴍ (https://t.me/Antibiolink)**_
 ━━━━━━━━━━━━━━━━━━━━
